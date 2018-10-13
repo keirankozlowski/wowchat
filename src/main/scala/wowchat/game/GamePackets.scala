@@ -83,6 +83,7 @@ object GamePackets {
   }
 
   object GuildEvents {
+    val GE_MOTD = 0x02
     val GE_JOINED = 0x03
     val GE_LEFT = 0x04
     val GE_REMOVED = 0x05

@@ -15,7 +15,7 @@ case class DiscordConfig(token: String)
 case class Wow(realmlist: RealmListConfig, account: String, password: String, character: String)
 case class RealmListConfig(name: String, host: String, port: Int)
 case class GuildConfig(notificationConfigs: Map[String, GuildNotificationConfig])
-case class GuildNotificationConfig(enabled: Boolean, format: String)
+case class GuildNotificationConfig(enabled: Boolean, format: String, channel: Option[String])
 case class ChannelConfig(chatDirection: ChatDirection, wow: WowChannelConfig, discord: DiscordChannelConfig)
 case class WowChannelConfig(tp: Byte, channel: Option[String] = None, format: String)
 case class DiscordChannelConfig(channel: String, format: String)
@@ -95,6 +95,7 @@ object WowChatConfig {
   private def parseGuildConfig(guildConf: Option[Config]): GuildConfig = {
     // make reasonable defaults for old config
     val defaults = Map(
+      "motd" -> (false, "Guild Message of the Day: %message"),
       "online" -> (false, "`[%user] has come online.`"),
       "offline" -> (false, "`[%user] has gone offline.`"),
       "joined" -> (true, "`[%user] has joined the guild.`"),
@@ -103,17 +104,18 @@ object WowChatConfig {
 
     guildConf.fold({
       GuildConfig(defaults.mapValues {
-        case (enabled, format) => GuildNotificationConfig(enabled, format)
+        case (enabled, format) => GuildNotificationConfig(enabled, format, None)
       })
     })(guildConf => {
       GuildConfig(
-        Seq("online", "offline", "joined", "left").map(key => {
+        Seq("motd", "online", "offline", "joined", "left").map(key => {
           val conf = getConfigOpt(guildConf, key)
           val default = defaults(key)
-          key -> conf.fold(GuildNotificationConfig(default._1, default._2))(conf => {
+          key -> conf.fold(GuildNotificationConfig(default._1, default._2, None))(conf => {
             GuildNotificationConfig(
               getOpt[Boolean](conf, "enabled").getOrElse(default._1),
-              getOpt[String](conf, "format").getOrElse(default._2)
+              getOpt[String](conf, "format").getOrElse(default._2),
+              getOpt[String](conf, "channel")
             )
           })
         })

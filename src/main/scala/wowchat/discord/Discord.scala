@@ -6,7 +6,7 @@ import wowchat.game.GamePackets
 import com.typesafe.scalalogging.StrictLogging
 import com.vdurmont.emoji.EmojiParser
 import net.dv8tion.jda.core.JDA.Status
-import net.dv8tion.jda.core.entities.Game
+import net.dv8tion.jda.core.entities.{Game, TextChannel}
 import net.dv8tion.jda.core.events.StatusChangeEvent
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
@@ -16,6 +16,8 @@ import wowchat.game.GamePackets.ChatEvents
 import scala.collection.JavaConverters._
 
 class Discord(discordConnectionCallback: CommonConnectionCallback) extends ListenerAdapter with StrictLogging {
+
+  var announcementsChannel: TextChannel = _
 
   private val jda = new JDABuilder(AccountType.BOT)
     .setToken(Global.config.discord.token)
@@ -63,6 +65,7 @@ class Discord(discordConnectionCallback: CommonConnectionCallback) extends Liste
   override def onStatusChange(event: StatusChangeEvent): Unit = {
     event.getNewStatus match {
       case Status.CONNECTED =>
+        announcementsChannel = event.getEntity.getTextChannelsByName("announcements", true).get(0)
         // we only care about this once. after we build the channel maps,
         // there is no reason to worry about the discord driver automatically reconnecting and changing status
         if (Global.discordToWow.nonEmpty || Global.wowToDiscord.nonEmpty) {

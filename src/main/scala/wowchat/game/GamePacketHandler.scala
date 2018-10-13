@@ -368,6 +368,7 @@ class GamePacketHandler(realmId: Int, sessionKey: Array[Byte], gameEventCallback
 
     val guildNotificationConfig = Global.config.guildConfig.notificationConfigs(
       event match {
+        case GamePackets.GuildEvents.GE_MOTD => "motd"
         case GamePackets.GuildEvents.GE_JOINED => "joined"
         case GamePackets.GuildEvents.GE_LEFT | GamePackets.GuildEvents.GE_REMOVED => "left"
         case GamePackets.GuildEvents.GE_SIGNED_ON => "online"
@@ -380,8 +381,13 @@ class GamePacketHandler(realmId: Int, sessionKey: Array[Byte], gameEventCallback
       val message = guildNotificationConfig
         .format
         .replace("%user", name)
+        .replace("%message", name)
 
-      Global.discord.sendGuildNotification(message)
+      if (event == GamePackets.GuildEvents.GE_MOTD) {
+        Global.discord.announcementsChannel.sendMessage(message).queue()
+      } else {
+        Global.discord.sendGuildNotification(message)
+      }
     }
 
     updateGuildRoster
